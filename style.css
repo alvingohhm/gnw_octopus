@@ -33,12 +33,44 @@ figure {
 }
 
 #o-head,
-#p-life0,
+#p-pos0,
+#p-pos0-hand,
 #p-life1,
 #p-life2 {
   visibility: visible;
 }
 
+/* #p-pos5-hand1,
+#p-pos5-hand2,
+#p-pos5-hand3 {
+  visibility: visible;
+  animation: toggle 750ms ease-in;
+} */
+
+/* #p-pos5-hand2 {
+  animation-delay: 250ms;
+}
+
+#p-pos5-hand3 {
+  animation-delay: 500ms;
+} */
+
+.test {
+  animation: toggle 750ms;
+}
+
 /* #p-life0 {
   visibility: hidden;
 } */
+
+@keyframes toggle {
+  from {
+    visibility: hidden;
+  }
+  50% {
+    visibility: hidden;
+  }
+  to {
+    visibility: visible;
+  }
+}

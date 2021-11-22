@@ -5,7 +5,7 @@
 const assets = {
   gameAsset: document.getElementById("game"),
   player: {
-    p_life0: document.getElementById("p-life0"),
+    p_pos0: document.getElementById("p-pos0"),
     p_pos0_bag: document.getElementById("p-pos0-bag"),
     p_pos0_hand: document.getElementById("p-pos0-hand"),
     p_life1: document.getElementById("p-life1"),
@@ -20,7 +20,7 @@ const assets = {
     p_pos4_bag: document.getElementById("p-pos4-bag"),
     p_pos4: document.getElementById("p-pos4"),
     p_pos4_bag: document.getElementById("p-pos4-bag"),
-    p_pos5_grp: document.getElementById("p-pos5-grp"),
+    p_pos5: document.getElementById("p-pos5"),
     p_pos5_bag: document.getElementById("p-pos5-bag"),
     p_pos5_hand1: document.getElementById("p-pos5-hand1"),
     p_pos5_hand2: document.getElementById("p-pos5-hand2"),
