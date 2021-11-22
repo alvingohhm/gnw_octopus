@@ -1,5 +1,7 @@
 "use strict";
 
+// assisgn all required dom to an object for easy manipulation
+// below id name are all tag to the specific avg element
 const assets = {
   gameAsset: document.getElementById("game"),
   player: {

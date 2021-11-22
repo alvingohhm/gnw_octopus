@@ -28,9 +28,16 @@ figure {
   border-radius: 5px;
 }
 
-/* #game {
+#game {
   visibility: hidden;
-} */
+}
+
+#o-head,
+#p-life0,
+#p-life1,
+#p-life2 {
+  visibility: visible;
+}
 
 /* #p-life0 {
   visibility: hidden;
