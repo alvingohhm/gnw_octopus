@@ -1,12 +1,12 @@
 "use strict";
 import assets from "./assets.js";
-
 //////////////////////////////////////////////////////////////
 // All game state start here
 /////////////////////////////////////////////////////////////
 //Game state when initialize
 const game = {
   score: 0,
+  pause: false,
 };
 //player state when initialize
 const player = {
@@ -14,16 +14,17 @@ const player = {
   is_capture: false,
   position: 0,
   life: 3,
+  cashInProgress: false,
 };
 //octopus state when initialize
 const octopus = {};
 
 const showAsset = (asset) => {
-  gsap.set(asset, { visibility: "visible", delay: 0.1 });
+  gsap.set(asset, { visibility: "visible" });
 };
 
 const hideAsset = (asset) => {
-  gsap.set(asset, { visibility: "hidden", delay: 0.1 });
+  gsap.set(asset, { visibility: "hidden" });
 };
 
 const moveRight = () => {
@@ -84,11 +85,18 @@ const moveLeft = () => {
 
 const grabCoin = () => {
   game.score++;
+  player.grabCoinInProgress = true;
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
   }
-  let tl = gsap.timeline();
+  let tl = gsap.timeline({
+    onComplete: function () {
+      if (player.position !== 5) {
+        hideAsset(assets.player.p_pos5_hand2);
+      }
+    },
+  });
   tl.set("#p-pos5-hand2", { visibility: "hidden", delay: 0.1 }).set(
     "#p-pos5-hand1",
     {
@@ -115,6 +123,33 @@ const grabCoin = () => {
   );
 };
 
+const cashIn = () => {
+  player.has_bag = false;
+  player.cashInProgress = true;
+  let tl = gsap.timeline({
+    repeat: 1,
+    repeatDelay: 0.1,
+    onComplete: function () {
+      console.log("my pos", player.position);
+      if (player.position !== 0) {
+        hideAsset(assets.player.p_pos0_bag);
+        hideAsset(assets.player.p_pos0_hand);
+      }
+      player.cashInProgress = false;
+    },
+  });
+  tl.set(assets.player.p_pos0_hand, { visibility: "hidden", delay: 0.1 });
+  tl.set(assets.player.p_pos0_bag, { visibility: "visible", delay: 0.1 });
+  tl.set(assets.player.p_pos0_bag, { visibility: "hidden", delay: 0.1 });
+  tl.set(assets.player.p_pos0_hand, {
+    visibility: "visible",
+    delay: 0.1,
+    onComplete: function () {
+      game.score++;
+    },
+  });
+};
+
 window.addEventListener(
   "keydown",
   function (e) {
@@ -123,12 +158,27 @@ window.addEventListener(
         if (player.position === 5) {
           grabCoin();
         } else {
-          moveRight();
+          if (player.position === 0 && player.cashInProgress) {
+            setTimeout(() => {
+              moveRight();
+            }, 500);
+          } else {
+            moveRight();
+          }
         }
         console.log(player.position);
         break;
       case "ArrowLeft":
-        moveLeft();
+        if (player.position === 5) {
+          setTimeout(() => {
+            moveLeft();
+          }, 300);
+        } else {
+          moveLeft();
+        }
+        if (player.position === 0 && player.has_bag) {
+          cashIn();
+        }
         console.log(player.position);
         break;
       default:
