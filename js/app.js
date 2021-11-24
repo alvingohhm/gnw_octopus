@@ -1,5 +1,6 @@
 "use strict";
 import assets from "./assets.js";
+import { randomInteger, showAsset, hideAsset } from "./utils.js";
 //////////////////////////////////////////////////////////////
 // All game state start here
 /////////////////////////////////////////////////////////////
@@ -7,26 +8,38 @@ import assets from "./assets.js";
 const game = {
   score: 0,
   pause: false,
+  speed: 0.7,
 };
 //player state when initialize
 const player = {
   has_bag: false,
   is_capture: false,
   position: 0,
-  life: 3,
+  life: 2,
   cashInProgress: false,
 };
 //octopus state when initialize
-const octopus = {};
-
-const showAsset = (asset) => {
-  gsap.set(asset, { visibility: "visible" });
+const octopus = {
+  legAvailable: ["leg1", "leg2", "leg3", "leg4", "leg5"],
+  activeLegs: [],
 };
+//----------------------------------------------------------------
+//////////////////////////////////////////////////////////////
+// globale Variable declaration
+/////////////////////////////////////////////////////////////
+// for reference gsap master timeline
+// const masterTl = gsap.timeline({ autoRemoveChildren: true });
+//----------------------------------------------------------------
+// time line declaration
+//----------------------------------------------------------------
+const timelineStore = [];
+for (let i = 0; i <= 4; i++) {
+  timelineStore[i] = gsap.timeline({ paused: true });
+}
 
-const hideAsset = (asset) => {
-  gsap.set(asset, { visibility: "hidden" });
-};
-
+//////////////////////////////////////////////////////////////
+// player action
+/////////////////////////////////////////////////////////////
 const moveRight = () => {
   let moveToPosId = "";
   let lastPosId = "";
@@ -85,7 +98,6 @@ const moveLeft = () => {
 
 const grabCoin = () => {
   game.score++;
-  player.grabCoinInProgress = true;
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
@@ -149,44 +161,202 @@ const cashIn = () => {
     },
   });
 };
+//////////////////////////////////////////////////////////////
+// octopus action
+/////////////////////////////////////////////////////////////
+const retractOctopusLeg = (targetLeg, delay = 0) => {
+  const keys = Object.keys(assets.octopus[targetLeg]);
+  let tl = gsap.timeline({
+    delay,
+    onComplete: () => {
+      let legLocation = 0;
+      let startDelay = 0;
+      let randomInt = 0;
+      let newTargetLeg = "";
+      let index = octopus.activeLegs.indexOf(targetLeg);
+      if (index !== -1) {
+        octopus.activeLegs.splice(index, 1);
+      }
+      newTargetLeg = targetLeg;
+      if (targetLeg === "leg1" || targetLeg === "leg2") {
+        randomInt = randomInteger(1, 2);
+        newTargetLeg = `leg${randomInt}`;
+      }
+      legLocation = Number(newTargetLeg.charAt(newTargetLeg.length - 1));
+      startDelay = Math.ceil(randomInteger(0, 4) * game.speed * 1000);
+      setTimeout(() => {
+        timelineStore[legLocation - 1].restart();
+        octopus.activeLegs.push(newTargetLeg);
+        if (game.pause) {
+          timelineStore[legLocation - 1].pause();
+        }
+        console.log("retract completed");
+      }, startDelay);
+    },
+  });
+  for (const key of keys.reverse()) {
+    tl.set(assets.octopus[targetLeg][key], {
+      visibility: "hidden",
+      delay: game.speed,
+    });
+  }
+  return tl;
+};
 
+const extendOctopusLeg = (targetLeg, delay = 0) => {
+  const keys = Object.keys(assets.octopus[targetLeg]);
+  let tl = gsap.timeline({
+    delay,
+    onComplete: () => {
+      let legLocation = Number(targetLeg.charAt(targetLeg.length - 1));
+      setTimeout(() => {
+        console.log("extend completed:", targetLeg);
+        if (player.position === legLocation) {
+          game.pause = true;
+          pauseGame(true);
+          console.log("Captured");
+          //CALL capture action
+          // } else {
+          //   retractOctopusLeg(targetLeg);
+        }
+      }, 200);
+    },
+  });
+
+  for (const key of keys) {
+    tl.set(assets.octopus[targetLeg][key], {
+      visibility: "visible",
+      delay: game.speed,
+    });
+  }
+  return tl;
+};
+
+const randomPickOctopusLeg = () => {
+  const noOfAvailableLegs = octopus.legAvailable.length;
+  let randomIndex = 0;
+  if (noOfAvailableLegs === 1) {
+    return octopus.legAvailable.pop();
+  } else {
+    randomIndex = randomInteger(0, octopus.legAvailable.length - 1);
+    return octopus.legAvailable.splice(randomIndex, 1)[0];
+  }
+};
+
+const buildTimeLine = () => {
+  for (let i = 0; i <= octopus.legAvailable.length - 1; i++) {
+    timelineStore[i].add(extendOctopusLeg(octopus.legAvailable[i]));
+    timelineStore[i].add(retractOctopusLeg(octopus.legAvailable[i]));
+  }
+};
+
+//DO CAPTURED
+//DO MOVE LIFE
+const moveLife = () => {
+  if (player.life === 2) {
+    console.log(object);
+  }
+};
+
+const pauseGame = (toPause) => {
+  let activeLeg = "";
+  let index = 0;
+  for (let i = 0; i <= octopus.activeLegs.length - 1; i++) {
+    activeLeg = octopus.activeLegs[i];
+    index = Number(activeLeg.charAt(activeLeg.length - 1)) - 1;
+    if (toPause) {
+      if (!timelineStore[index].paused()) {
+        timelineStore[index].pause();
+      }
+    } else {
+      if (timelineStore[index].paused()) {
+        timelineStore[index].resume();
+      }
+    }
+  }
+};
+
+const gameInit = () => {
+  game.score = 0;
+  game.pause = false;
+  game.speed = 1;
+  player.has_bag = false;
+  player.is_capture = false;
+  player.position = 0;
+  player.life = 2;
+  player.cashInProgress = false;
+  octopus.legAvailable = ["leg1", "leg2", "leg3", "leg4", "leg5"];
+};
+
+const startGame = () => {
+  gameInit();
+  buildTimeLine();
+  octopus.legAvailable.shift();
+  let legPicked = "";
+  let timelineStoreIndex = 0;
+  const noOfAvailableLegs = octopus.legAvailable.length;
+  for (let i = 0; i <= noOfAvailableLegs - 1; i++) {
+    legPicked = randomPickOctopusLeg();
+    timelineStoreIndex = Number(legPicked.charAt(legPicked.length - 1)) - 1;
+    timelineStore[timelineStoreIndex].resume().delay(i * game.speed);
+    octopus.activeLegs.push(legPicked);
+  }
+};
+
+startGame();
+
+//////////////////////////////////////////////////////////////
+// event listener
+/////////////////////////////////////////////////////////////
 window.addEventListener(
   "keydown",
   function (e) {
-    switch (e.key) {
-      case "ArrowRight":
-        if (player.position === 5) {
-          grabCoin();
-        } else {
-          if (player.position === 0 && player.cashInProgress) {
-            setTimeout(() => {
-              moveRight();
-            }, 500);
+    if (!game.pause) {
+      switch (e.key) {
+        case "ArrowRight":
+          if (player.position === 5) {
+            grabCoin();
           } else {
-            moveRight();
+            if (player.position === 0 && player.cashInProgress) {
+              setTimeout(() => {
+                moveRight();
+              }, 500);
+            } else {
+              moveRight();
+            }
           }
-        }
-        console.log(player.position);
-        break;
-      case "ArrowLeft":
-        if (player.position === 5) {
-          setTimeout(() => {
+          console.log("i am at: ", player.position);
+          break;
+        case "ArrowLeft":
+          if (player.position === 5) {
+            setTimeout(() => {
+              moveLeft();
+            }, 300);
+          } else {
             moveLeft();
-          }, 300);
-        } else {
-          moveLeft();
-        }
-        if (player.position === 0 && player.has_bag) {
-          cashIn();
-        }
-        console.log(player.position);
-        break;
-      default:
-        break;
+          }
+          if (player.position === 0 && player.has_bag) {
+            cashIn();
+          }
+          console.log("i am at: ", player.position);
+          break;
+        default:
+          break;
+      }
     }
   },
   true
 );
+
+document.getElementById("btn").addEventListener("click", function () {
+  game.pause = true;
+  pauseGame(true);
+});
+
+document.getElementById("btn2").addEventListener("click", function () {
+  game.pause = false;
+  pauseGame(false);
+});
 
 // function listener(event) {
 //   var l = document.createElement("li");
