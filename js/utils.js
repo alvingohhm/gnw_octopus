@@ -4,10 +4,6 @@ export function randomInteger(min, max) {
   return r;
 }
 
-export function randomSeconds(min, max) {
-  return Math.round((randomInteger(min, max) / 1000) * 100) / 100;
-}
-
 export const showAsset = (asset) => {
   gsap.set(asset, { visibility: "visible" });
 };
