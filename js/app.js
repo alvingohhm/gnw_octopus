@@ -15,7 +15,7 @@ const player = {
   has_bag: false,
   is_capture: false,
   position: 0,
-  life: 2,
+  life: 3,
   cashInProgress: false,
 };
 //octopus state when initialize
@@ -215,9 +215,17 @@ const extendOctopusLeg = (targetLeg, delay = 0) => {
           game.pause = true;
           pauseGame(true);
           console.log("Captured");
-          //CALL capture action
-          // } else {
-          //   retractOctopusLeg(targetLeg);
+          runCaptured();
+          if (player.life !== 0) {
+            setTimeout(() => {
+              game.pause = false;
+              pauseGame(false);
+              player.position = 0;
+              player.has_bag = false;
+            }, 3600);
+          } else {
+            gameStop();
+          }
         }
       }, 200);
     },
@@ -250,11 +258,88 @@ const buildTimeLine = () => {
   }
 };
 
-//DO CAPTURED
-//DO MOVE LIFE
 const moveLife = () => {
-  if (player.life === 2) {
-    console.log(object);
+  setTimeout(() => {
+    if (player.life === 2) {
+      hideAsset(assets.player.p_life1);
+      showAsset(assets.player.p_pos0);
+      showAsset(assets.player.p_pos0_hand);
+      setTimeout(() => {
+        hideAsset(assets.player.p_life2);
+        showAsset(assets.player.p_life1);
+      }, 1500);
+    } else {
+      hideAsset(assets.player.p_life1);
+      showAsset(assets.player.p_pos0);
+      showAsset(assets.player.p_pos0_hand);
+    }
+  }, 1500);
+};
+
+const capturedAimation = () => {
+  showAsset(assets.player.p_lost);
+  showAsset(assets.octopus.leg4.o_pos4_0);
+  showAsset(assets.octopus.leg4.o_pos4_1);
+  showAsset(assets.octopus.leg3.o_pos3_0);
+  showAsset(assets.octopus.leg3.o_pos3_1);
+  let tl = gsap.timeline({
+    onComplete: function () {
+      if (player.life !== 0) {
+        setTimeout(() => {
+          hideAsset(assets.player.p_lost);
+          hideAsset(assets.octopus.leg4.o_pos4_0);
+          hideAsset(assets.octopus.leg4.o_pos4_1);
+          hideAsset(assets.octopus.leg3.o_pos3_0);
+          hideAsset(assets.octopus.leg3.o_pos3_1);
+          hideAsset(assets.player.p_lost_anim_set2);
+        }, 300);
+      } else {
+        capturedAimation();
+      }
+    },
+  });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "visible", delay: 0.2 });
+  tl.set(assets.player.p_lost_anim_set1, { visibility: "hidden", delay: 0.3 });
+  tl.set(assets.player.p_lost_anim_set2, { visibility: "visible", delay: 0.2 });
+};
+
+const runCaptured = () => {
+  player.life--;
+  let posId = `p_pos${player.position}`;
+
+  // find out player current position and hide it
+  hideAsset(assets.player[posId]);
+  if (player.position === 5) {
+    hideAsset(assets.player.p_pos5_hand2);
+  }
+  if (player.has_bag) {
+    hideAsset(assets.player[posId + "_bag"]);
+  }
+
+  // restart leg4 animation and pause it so that the leg segments are
+  // hidden. this is to prepare for capture animation on leg4
+  timelineStore[2].restart();
+  timelineStore[2].pause();
+  timelineStore[3].restart();
+  timelineStore[3].pause();
+
+  capturedAimation();
+  // game over when life is zero
+  if (player.life === 0) {
+    console.log("game over");
+    return;
+  } else {
+    moveLife();
   }
 };
 
@@ -276,6 +361,8 @@ const pauseGame = (toPause) => {
   }
 };
 
+const gameStop = () => {};
+
 const gameInit = () => {
   game.score = 0;
   game.pause = false;
@@ -283,7 +370,7 @@ const gameInit = () => {
   player.has_bag = false;
   player.is_capture = false;
   player.position = 0;
-  player.life = 2;
+  player.life = 3;
   player.cashInProgress = false;
   octopus.legAvailable = ["leg1", "leg2", "leg3", "leg4", "leg5"];
 };
@@ -303,7 +390,7 @@ const startGame = () => {
   }
 };
 
-startGame();
+// startGame();
 
 //////////////////////////////////////////////////////////////
 // event listener
