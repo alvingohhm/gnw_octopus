@@ -37,6 +37,12 @@ const octopus = {
 let timelineStore = [];
 let capturedAimationController = null;
 // const capturedTl = gsap.timeline({ paused: true });
+const startGameBtn = document.getElementById("start-game");
+const pauseGameBtn = document.getElementById("pause-game");
+const gameOverDialog = document.getElementById("modalGameOver");
+const gameOverModal = new bootstrap.Modal(gameOverDialog);
+// const beepSound = document.getElementById("beep");
+// const tickSound = document.getElementById("tick");
 
 //////////////////////////////////////////////////////////////
 // player action
@@ -116,12 +122,13 @@ const incrementScore = () => {
         break;
     }
   } else {
-    //win
+    gameWin();
   }
 };
 
 const grabCoin = () => {
   incrementScore();
+  beepSound.play();
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
@@ -243,6 +250,7 @@ const extendOctopusLeg = (targetLeg, delay = 0) => {
           console.log("game pause");
           pauseGame(true);
           console.log("Captured");
+
           for (let i = 1; i <= 5; i++) {
             let PosId = `p_pos${i}`;
             hideAsset(assets.player[PosId]);
@@ -405,6 +413,21 @@ const pauseGame = (toPause) => {
 
 const gameStop = () => {
   timelineStore = [];
+  pauseGameBtn.classList.add("disabled");
+  document.querySelector("h5.modal-title").innerText = "Game Over";
+  document.querySelector(".modal-body").innerText =
+    "Thanks for playing! Hope you like it!!!";
+  setTimeout(() => {
+    gameOverModal.show();
+  }, 2500);
+};
+
+const gameWin = () => {
+  pauseGameBtn.classList.add("disabled");
+  document.querySelector("h5.modal-title").innerText = "Game Win!";
+  document.querySelector(".modal-body").innerText =
+    "Well done! Thanks for playing. Hope you like it!!!";
+  gameOverModal.show();
 };
 
 const gameInit = () => {
@@ -419,7 +442,7 @@ const gameInit = () => {
   player.life = 3;
   player.cashInProgress = false;
   octopus.legAvailable = ["leg1", "leg2", "leg3", "leg4", "leg5"];
-
+  pauseGameBtn.innerText = "Pause Game";
   if (timelineStore.length > 0) {
     for (let i = 0; i <= timelineStore.length - 1; i++) {
       timelineStore[i].clear();
@@ -433,6 +456,13 @@ const gameInit = () => {
     capturedAimationController.clear();
   }
   capturedAimationController = null;
+
+  for (let i = 1; i <= 5; i++) {
+    let posId = `p_pos${i}`;
+    hideAsset(assets.player[posId]);
+    hideAsset(assets.player[posId + "_bag"]);
+    if (i === 5) hideAsset(assets.player.p_pos5_hand2);
+  }
 
   showAsset(assets.player.p_pos0);
   showAsset(assets.player.p_pos0_hand);
@@ -459,6 +489,7 @@ const gameInit = () => {
 
 const startGame = () => {
   gameInit();
+  pauseGameBtn.classList.remove("disabled");
   octopus.legAvailable.shift();
   let legPicked = "";
   let timelineStoreIndex = 0;
@@ -471,9 +502,6 @@ const startGame = () => {
   }
 };
 
-// gameInits();
-startGame();
-// scoreDisplay.init();
 //////////////////////////////////////////////////////////////
 // event listener
 /////////////////////////////////////////////////////////////
@@ -517,16 +545,33 @@ window.addEventListener(
   true
 );
 
-// document.getElementById("btn").addEventListener("click", function () {
-//   game.pause = true;
-//   pauseGame(true);
-// });
+startGameBtn.addEventListener("click", function () {
+  startGame();
+});
 
-// document.getElementById("btn2").addEventListener("click", function () {
-//   startGame();
-//   // capturedAimationController.clear();
-// });
+pauseGameBtn.addEventListener("click", function () {
+  console.log("hi");
+  if (pauseGameBtn.innerText === "Pause Game") {
+    game.pause = true;
+    pauseGame(true);
+    pauseGameBtn.innerText = "Resume Game";
+  } else if (pauseGameBtn.innerText === "Resume Game") {
+    game.pause = false;
+    pauseGame(false);
+    pauseGameBtn.innerText = "Pause Game";
+  }
+});
 
+gameOverDialog.addEventListener("hidden.bs.modal", function (evt) {
+  gameInit();
+});
+
+// tickSound.playbackRate = ;
+// tickSound.play();
+
+// setTimeout(() => {
+//   tickSound.pause();
+// }, 5000);
 // function listener(event) {
 //   var l = document.createElement("li");
 //   switch (event.type) {

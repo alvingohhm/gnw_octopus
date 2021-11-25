@@ -6,6 +6,21 @@
 
   box-shadow: none !important;
 } */
+:root {
+  --blue: #5e72e4;
+  --bg-dark: #1e1e2f;
+  --bg-white: #ffffff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-dark);
+}
 
 .debug-y {
   background-color: #ffff00a6;
@@ -22,12 +37,10 @@
 }
 
 figure {
-  width: 900px;
-  /* height: 768px; */
-  border: 2px solid black;
-  border-radius: 5px;
+  background-color: #cbd5d5;
 }
 
+/* -- Below for svg styling --*/
 #game {
   visibility: hidden;
 }
@@ -38,39 +51,4 @@ figure {
 #p-life1,
 #p-life2 {
   visibility: visible;
-}
-
-/* #p-pos5-hand1,
-#p-pos5-hand2,
-#p-pos5-hand3 {
-  visibility: visible;
-  animation: toggle 750ms ease-in;
-} */
-
-/* #p-pos5-hand2 {
-  animation-delay: 250ms;
-}
-
-#p-pos5-hand3 {
-  animation-delay: 500ms;
-} */
-
-.test {
-  animation: toggle 750ms;
-}
-
-/* #p-life0 {
-  visibility: hidden;
-} */
-
-@keyframes toggle {
-  from {
-    visibility: hidden;
-  }
-  50% {
-    visibility: hidden;
-  }
-  to {
-    visibility: visible;
-  }
 }
