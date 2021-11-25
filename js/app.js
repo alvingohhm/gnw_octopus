@@ -9,7 +9,7 @@ import { randomInteger, showAsset, hideAsset } from "./utils.js";
 const game = {
   score: 0,
   pause: false,
-  speed: 0.7,
+  speed: 1,
   gameOver: false,
 };
 //player state when initialize
@@ -100,10 +100,28 @@ const moveLeft = () => {
     }
   }
 };
+const incrementScore = () => {
+  if (game.score <= 1000) {
+    game.score++;
+    scoreDisplay.display(game.score);
+    switch (game.score) {
+      case 30:
+        game.speed = 0.8;
+        break;
+      case 60:
+        game.speed = 0.6;
+        break;
+      case 100:
+        game.speed = 0.5;
+        break;
+    }
+  } else {
+    //win
+  }
+};
 
 const grabCoin = () => {
-  game.score++;
-  scoreDisplay.display(game.score);
+  incrementScore();
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
@@ -163,8 +181,7 @@ const cashIn = () => {
     visibility: "visible",
     delay: 0.1,
     onComplete: function () {
-      game.score++;
-      scoreDisplay.display(game.score);
+      incrementScore();
     },
   });
 };
@@ -394,7 +411,7 @@ const gameInit = () => {
   game.score = 0;
   scoreDisplay.init();
   game.pause = false;
-  game.speed = 0.7;
+  game.speed = 1;
   game.gameOver = false;
   player.has_bag = false;
   player.is_capture = false;
@@ -500,15 +517,15 @@ window.addEventListener(
   true
 );
 
-document.getElementById("btn").addEventListener("click", function () {
-  game.pause = true;
-  pauseGame(true);
-});
+// document.getElementById("btn").addEventListener("click", function () {
+//   game.pause = true;
+//   pauseGame(true);
+// });
 
-document.getElementById("btn2").addEventListener("click", function () {
-  startGame();
-  // capturedAimationController.clear();
-});
+// document.getElementById("btn2").addEventListener("click", function () {
+//   startGame();
+//   // capturedAimationController.clear();
+// });
 
 // function listener(event) {
 //   var l = document.createElement("li");
