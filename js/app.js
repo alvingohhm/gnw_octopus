@@ -1,5 +1,6 @@
 "use strict";
 import assets from "./assets.js";
+import scoreDisplay from "./score_display.js";
 import { randomInteger, showAsset, hideAsset } from "./utils.js";
 //////////////////////////////////////////////////////////////
 // All game state start here
@@ -43,61 +44,66 @@ let capturedAimationController = null;
 const moveRight = () => {
   let moveToPosId = "";
   let lastPosId = "";
-  if (player.position < 5) {
-    player.position++;
-  }
-  if (player.position > 0 && player.position <= 5) {
-    //for position 0 the hand (p_pos0_hand) must hide
-    if (player.position - 1 === 0) {
-      hideAsset(assets.player.p_pos0_hand);
+  if (game.pause === false) {
+    if (player.position < 5) {
+      player.position++;
     }
-    lastPosId = `p_pos${player.position - 1}`;
-    hideAsset(assets.player[lastPosId]);
+    if (player.position > 0 && player.position <= 5) {
+      //for position 0 the hand (p_pos0_hand) must hide
+      if (player.position - 1 === 0) {
+        hideAsset(assets.player.p_pos0_hand);
+      }
+      lastPosId = `p_pos${player.position - 1}`;
+      hideAsset(assets.player[lastPosId]);
+      if (player.has_bag) {
+        hideAsset(assets.player[lastPosId + "_bag"]);
+      }
+    }
+    //for position 5 the hand (p_pos5_hand2) must show
+    if (player.position === 5) {
+      showAsset(assets.player.p_pos5_hand2);
+    }
+    moveToPosId = `p_pos${player.position}`;
+    showAsset(assets.player[moveToPosId]);
     if (player.has_bag) {
-      hideAsset(assets.player[lastPosId + "_bag"]);
+      showAsset(assets.player[moveToPosId + "_bag"]);
     }
-  }
-  //for position 5 the hand (p_pos5_hand2) must show
-  if (player.position === 5) {
-    showAsset(assets.player.p_pos5_hand2);
-  }
-  moveToPosId = `p_pos${player.position}`;
-  showAsset(assets.player[moveToPosId]);
-  if (player.has_bag) {
-    showAsset(assets.player[moveToPosId + "_bag"]);
   }
 };
 
 const moveLeft = () => {
   let moveToPosId = "";
   let lastPosId = "";
-  if (player.position > 0) {
-    player.position--;
-  }
-  if (player.position >= 0 && player.position < 5) {
-    //for position 5 the hand (p_pos5_hand2) must hide
-    if (player.position + 1 === 5) {
-      hideAsset(assets.player.p_pos5_hand2);
+  if (game.pause === false) {
+    if (player.position > 0) {
+      player.position--;
     }
-    lastPosId = `p_pos${player.position + 1}`;
-    hideAsset(assets.player[lastPosId]);
+    if (player.position >= 0 && player.position < 5) {
+      //for position 5 the hand (p_pos5_hand2) must hide
+      if (player.position + 1 === 5) {
+        hideAsset(assets.player.p_pos5_hand2);
+      }
+      lastPosId = `p_pos${player.position + 1}`;
+      hideAsset(assets.player[lastPosId]);
+      if (player.has_bag) {
+        hideAsset(assets.player[lastPosId + "_bag"]);
+      }
+    }
+    //for position 0 the naming of the id is different from the other position (is p_life0)
+    if (player.position === 0) {
+      showAsset(assets.player.p_pos0_hand);
+    }
+    moveToPosId = `p_pos${player.position}`;
+    showAsset(assets.player[moveToPosId]);
     if (player.has_bag) {
-      hideAsset(assets.player[lastPosId + "_bag"]);
+      showAsset(assets.player[moveToPosId + "_bag"]);
     }
-  }
-  //for position 0 the naming of the id is different from the other position (is p_life0)
-  if (player.position === 0) {
-    showAsset(assets.player.p_pos0_hand);
-  }
-  moveToPosId = `p_pos${player.position}`;
-  showAsset(assets.player[moveToPosId]);
-  if (player.has_bag) {
-    showAsset(assets.player[moveToPosId + "_bag"]);
   }
 };
 
 const grabCoin = () => {
   game.score++;
+  scoreDisplay.display(game.score);
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
@@ -158,6 +164,7 @@ const cashIn = () => {
     delay: 0.1,
     onComplete: function () {
       game.score++;
+      scoreDisplay.display(game.score);
     },
   });
 };
@@ -216,21 +223,29 @@ const extendOctopusLeg = (targetLeg, delay = 0) => {
         console.log("extend completed:", targetLeg);
         if (player.position === legLocation) {
           game.pause = true;
+          console.log("game pause");
           pauseGame(true);
           console.log("Captured");
-          runCaptured();
+          for (let i = 1; i <= 5; i++) {
+            let PosId = `p_pos${i}`;
+            hideAsset(assets.player[PosId]);
+            if (i === 5) hideAsset(assets.player.p_pos5_hand2);
+            if (player.has_bag) hideAsset(assets.player[PosId + "_bag"]);
+          }
+          runCaptured(player.position);
           if (!game.gameOver) {
             setTimeout(() => {
               game.pause = false;
+              console.log("game resume");
               pauseGame(false);
               player.position = 0;
               player.has_bag = false;
-            }, 3600);
+            }, 3700);
           } else {
             gameStop();
           }
         }
-      }, 400);
+      }, 350);
     },
   });
 
@@ -311,15 +326,15 @@ const capturedAimation = () => {
   return tl;
 };
 
-const runCaptured = () => {
+const runCaptured = (playerPosition) => {
   // deduct player life state
   player.life--;
   // find out player current position and hide it
   // if current position is at 5 then need hide extra hand
-  let currentPosId = `p_pos${player.position}`;
+  let currentPosId = `p_pos${playerPosition}`;
   hideAsset(assets.player[currentPosId]);
   if (player.position === 5) hideAsset(assets.player.p_pos5_hand2);
-  if (player.has_bag) hideAsset(assets.player[posId + "_bag"]);
+  if (player.has_bag) hideAsset(assets.player[currentPosId + "_bag"]);
   // restart leg4 animation and pause it so that the leg segments are
   // hidden. this is to prepare for capture animation on leg4
   // using the timeline to control instead of hiding the individual segment
@@ -331,7 +346,9 @@ const runCaptured = () => {
   //run the capturedAnimation and assign it to global variable
   //so that can control/pause the animation outside the function later
   capturedAimationController = capturedAimation();
-  // game over when life is zero
+  // set state to game over when life is zero and exit function
+  // if yet to game over, continue with the shifting player on the boat
+  // funtion
   if (player.life === 0) {
     game.gameOver = true;
     return;
@@ -375,6 +392,7 @@ const gameStop = () => {
 
 const gameInit = () => {
   game.score = 0;
+  scoreDisplay.init();
   game.pause = false;
   game.speed = 0.7;
   game.gameOver = false;
@@ -435,16 +453,17 @@ const startGame = () => {
     octopus.activeLegs.push(legPicked);
   }
 };
-// gameInit();
-startGame();
 
+// gameInits();
+startGame();
+// scoreDisplay.init();
 //////////////////////////////////////////////////////////////
 // event listener
 /////////////////////////////////////////////////////////////
 window.addEventListener(
   "keydown",
   function (e) {
-    if (!game.pause) {
+    if (game.pause === false) {
       switch (e.key) {
         case "ArrowRight":
           if (player.position === 5) {
@@ -458,6 +477,7 @@ window.addEventListener(
               moveRight();
             }
           }
+          console.log("i am at pos:", player.position);
           break;
         case "ArrowLeft":
           if (player.position === 5) {
@@ -470,6 +490,7 @@ window.addEventListener(
           if (player.position === 0 && player.has_bag) {
             cashIn();
           }
+          console.log("i am at pos:", player.position, `game:${game.pause}`);
           break;
         default:
           break;
@@ -479,15 +500,15 @@ window.addEventListener(
   true
 );
 
-// document.getElementById("btn").addEventListener("click", function () {
-//   game.pause = true;
-//   pauseGame(true);
-// });
+document.getElementById("btn").addEventListener("click", function () {
+  game.pause = true;
+  pauseGame(true);
+});
 
-// document.getElementById("btn2").addEventListener("click", function () {
-//   startGame();
-//   // capturedAimationController.clear();
-// });
+document.getElementById("btn2").addEventListener("click", function () {
+  startGame();
+  // capturedAimationController.clear();
+});
 
 // function listener(event) {
 //   var l = document.createElement("li");

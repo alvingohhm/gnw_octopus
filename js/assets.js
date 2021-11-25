@@ -3,7 +3,7 @@
 // assisgn all required dom to an object for easy manipulation
 // below id name are all tag to the specific avg element
 const assets = {
-  gameAsset: document.getElementById("game"),
+  gameAssets: document.getElementById("game"),
   player: {
     p_pos0: document.getElementById("p-pos0"),
     p_pos0_bag: document.getElementById("p-pos0-bag"),
@@ -59,6 +59,39 @@ const assets = {
       o_pos5_0: document.getElementById("o-pos5-0"),
       o_pos5_1: document.getElementById("o-pos5-1"),
       o_pos5_2: document.getElementById("o-pos5-2"),
+    },
+  },
+  game: {
+    seg1: {
+      seg1_2: document.getElementById("segment1-2"),
+      seg1_6: document.getElementById("segment1-6"),
+    },
+    seg2: {
+      seg2_0: document.getElementById("segment2-0"),
+      seg2_1: document.getElementById("segment2-1"),
+      seg2_2: document.getElementById("segment2-2"),
+      seg2_3: document.getElementById("segment2-3"),
+      seg2_4: document.getElementById("segment2-4"),
+      seg2_5: document.getElementById("segment2-5"),
+      seg2_6: document.getElementById("segment2-6"),
+    },
+    seg3: {
+      seg3_0: document.getElementById("segment3-0"),
+      seg3_1: document.getElementById("segment3-1"),
+      seg3_2: document.getElementById("segment3-2"),
+      seg3_3: document.getElementById("segment3-3"),
+      seg3_4: document.getElementById("segment3-4"),
+      seg3_5: document.getElementById("segment3-5"),
+      seg3_6: document.getElementById("segment3-6"),
+    },
+    seg4: {
+      seg4_0: document.getElementById("segment4-0"),
+      seg4_1: document.getElementById("segment4-1"),
+      seg4_2: document.getElementById("segment4-2"),
+      seg4_3: document.getElementById("segment4-3"),
+      seg4_4: document.getElementById("segment4-4"),
+      seg4_5: document.getElementById("segment4-5"),
+      seg4_6: document.getElementById("segment4-6"),
     },
   },
 };
