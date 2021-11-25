@@ -9,6 +9,7 @@ const game = {
   score: 0,
   pause: false,
   speed: 0.7,
+  gameOver: false,
 };
 //player state when initialize
 const player = {
@@ -32,10 +33,9 @@ const octopus = {
 //----------------------------------------------------------------
 // time line declaration
 //----------------------------------------------------------------
-const timelineStore = [];
-for (let i = 0; i <= 4; i++) {
-  timelineStore[i] = gsap.timeline({ paused: true });
-}
+let timelineStore = [];
+let capturedAimationController = null;
+// const capturedTl = gsap.timeline({ paused: true });
 
 //////////////////////////////////////////////////////////////
 // player action
@@ -184,14 +184,17 @@ const retractOctopusLeg = (targetLeg, delay = 0) => {
       }
       legLocation = Number(newTargetLeg.charAt(newTargetLeg.length - 1));
       startDelay = Math.ceil(randomInteger(0, 4) * game.speed * 1000);
-      setTimeout(() => {
-        timelineStore[legLocation - 1].restart();
-        octopus.activeLegs.push(newTargetLeg);
-        if (game.pause) {
-          timelineStore[legLocation - 1].pause();
-        }
-        console.log("retract completed");
-      }, startDelay);
+
+      if (!game.gameOver) {
+        setTimeout(() => {
+          timelineStore[legLocation - 1].restart();
+          octopus.activeLegs.push(newTargetLeg);
+          if (game.pause) {
+            timelineStore[legLocation - 1].pause();
+          }
+          console.log("retract completed");
+        }, startDelay);
+      }
     },
   });
   for (const key of keys.reverse()) {
@@ -216,7 +219,7 @@ const extendOctopusLeg = (targetLeg, delay = 0) => {
           pauseGame(true);
           console.log("Captured");
           runCaptured();
-          if (player.life !== 0) {
+          if (!game.gameOver) {
             setTimeout(() => {
               game.pause = false;
               pauseGame(false);
@@ -227,7 +230,7 @@ const extendOctopusLeg = (targetLeg, delay = 0) => {
             gameStop();
           }
         }
-      }, 200);
+      }, 400);
     },
   });
 
@@ -248,13 +251,6 @@ const randomPickOctopusLeg = () => {
   } else {
     randomIndex = randomInteger(0, octopus.legAvailable.length - 1);
     return octopus.legAvailable.splice(randomIndex, 1)[0];
-  }
-};
-
-const buildTimeLine = () => {
-  for (let i = 0; i <= octopus.legAvailable.length - 1; i++) {
-    timelineStore[i].add(extendOctopusLeg(octopus.legAvailable[i]));
-    timelineStore[i].add(retractOctopusLeg(octopus.legAvailable[i]));
   }
 };
 
@@ -294,7 +290,8 @@ const capturedAimation = () => {
           hideAsset(assets.player.p_lost_anim_set2);
         }, 300);
       } else {
-        capturedAimation();
+        capturedAimationController.clear();
+        capturedAimationController = capturedAimation();
       }
     },
   });
@@ -311,37 +308,48 @@ const capturedAimation = () => {
   tl.set(assets.player.p_lost_anim_set1, { visibility: "visible", delay: 0.2 });
   tl.set(assets.player.p_lost_anim_set1, { visibility: "hidden", delay: 0.3 });
   tl.set(assets.player.p_lost_anim_set2, { visibility: "visible", delay: 0.2 });
+  return tl;
 };
 
 const runCaptured = () => {
+  // deduct player life state
   player.life--;
-  let posId = `p_pos${player.position}`;
-
   // find out player current position and hide it
-  hideAsset(assets.player[posId]);
-  if (player.position === 5) {
-    hideAsset(assets.player.p_pos5_hand2);
-  }
-  if (player.has_bag) {
-    hideAsset(assets.player[posId + "_bag"]);
-  }
-
+  // if current position is at 5 then need hide extra hand
+  let currentPosId = `p_pos${player.position}`;
+  hideAsset(assets.player[currentPosId]);
+  if (player.position === 5) hideAsset(assets.player.p_pos5_hand2);
+  if (player.has_bag) hideAsset(assets.player[posId + "_bag"]);
   // restart leg4 animation and pause it so that the leg segments are
   // hidden. this is to prepare for capture animation on leg4
+  // using the timeline to control instead of hiding the individual segment
+  // less code
   timelineStore[2].restart();
   timelineStore[2].pause();
   timelineStore[3].restart();
   timelineStore[3].pause();
-
-  capturedAimation();
+  //run the capturedAnimation and assign it to global variable
+  //so that can control/pause the animation outside the function later
+  capturedAimationController = capturedAimation();
   // game over when life is zero
   if (player.life === 0) {
-    console.log("game over");
+    game.gameOver = true;
     return;
   } else {
     moveLife();
   }
 };
+
+const buildTimeLine = () => {
+  for (let i = 0; i <= octopus.legAvailable.length - 1; i++) {
+    timelineStore[i].add(extendOctopusLeg(octopus.legAvailable[i]));
+    timelineStore[i].add(retractOctopusLeg(octopus.legAvailable[i]));
+  }
+};
+
+//////////////////////////////////////////////////////////////
+// overall game control section
+/////////////////////////////////////////////////////////////
 
 const pauseGame = (toPause) => {
   let activeLeg = "";
@@ -361,23 +369,61 @@ const pauseGame = (toPause) => {
   }
 };
 
-const gameStop = () => {};
+const gameStop = () => {
+  timelineStore = [];
+};
 
 const gameInit = () => {
   game.score = 0;
   game.pause = false;
-  game.speed = 1;
+  game.speed = 0.7;
+  game.gameOver = false;
   player.has_bag = false;
   player.is_capture = false;
   player.position = 0;
   player.life = 3;
   player.cashInProgress = false;
   octopus.legAvailable = ["leg1", "leg2", "leg3", "leg4", "leg5"];
+
+  if (timelineStore.length > 0) {
+    for (let i = 0; i <= timelineStore.length - 1; i++) {
+      timelineStore[i].clear();
+    }
+  }
+  timelineStore = [];
+  for (let i = 0; i <= 4; i++) {
+    timelineStore[i] = gsap.timeline({ paused: true });
+  }
+  if (capturedAimationController !== null) {
+    capturedAimationController.clear();
+  }
+  capturedAimationController = null;
+
+  showAsset(assets.player.p_pos0);
+  showAsset(assets.player.p_pos0_hand);
+  showAsset(assets.player.p_life1);
+  showAsset(assets.player.p_life2);
+  hideAsset(assets.player.p_lost);
+  octopus.legAvailable.map((leg) => {
+    // let legObj = Object.entries(assets.octopus[leg]);
+    let legObj = Object.keys(assets.octopus[leg]);
+    for (const segment of legObj) {
+      hideAsset(assets.octopus[leg][segment]);
+    }
+  });
+
+  hideAsset(assets.octopus.leg4.o_pos4_0);
+  hideAsset(assets.octopus.leg4.o_pos4_1);
+  hideAsset(assets.octopus.leg3.o_pos3_0);
+  hideAsset(assets.octopus.leg3.o_pos3_1);
+  hideAsset(assets.player.p_lost);
+  hideAsset(assets.player.p_lost_anim_set1);
+  hideAsset(assets.player.p_lost_anim_set2);
+  buildTimeLine();
 };
 
 const startGame = () => {
   gameInit();
-  buildTimeLine();
   octopus.legAvailable.shift();
   let legPicked = "";
   let timelineStoreIndex = 0;
@@ -389,8 +435,8 @@ const startGame = () => {
     octopus.activeLegs.push(legPicked);
   }
 };
-
-// startGame();
+// gameInit();
+startGame();
 
 //////////////////////////////////////////////////////////////
 // event listener
@@ -412,7 +458,6 @@ window.addEventListener(
               moveRight();
             }
           }
-          console.log("i am at: ", player.position);
           break;
         case "ArrowLeft":
           if (player.position === 5) {
@@ -425,7 +470,6 @@ window.addEventListener(
           if (player.position === 0 && player.has_bag) {
             cashIn();
           }
-          console.log("i am at: ", player.position);
           break;
         default:
           break;
@@ -435,15 +479,15 @@ window.addEventListener(
   true
 );
 
-document.getElementById("btn").addEventListener("click", function () {
-  game.pause = true;
-  pauseGame(true);
-});
+// document.getElementById("btn").addEventListener("click", function () {
+//   game.pause = true;
+//   pauseGame(true);
+// });
 
-document.getElementById("btn2").addEventListener("click", function () {
-  game.pause = false;
-  pauseGame(false);
-});
+// document.getElementById("btn2").addEventListener("click", function () {
+//   startGame();
+//   // capturedAimationController.clear();
+// });
 
 // function listener(event) {
 //   var l = document.createElement("li");
