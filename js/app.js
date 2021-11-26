@@ -128,7 +128,7 @@ const incrementScore = () => {
 
 const grabCoin = () => {
   incrementScore();
-  beepSound.play();
+  // beepSound.play();
   if (player.has_bag === false) {
     showAsset(assets.player.p_pos5_bag);
     player.has_bag = true;
